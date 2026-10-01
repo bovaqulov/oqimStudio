@@ -1,0 +1,22 @@
+# Web
+Django==6.1
+djangorestframework==3.18.0
+django-cors-headers==4.9.0
+
+# ASGI + WebSocket
+channels[daphne]==4.3.2
+channels-redis==4.3.0
+
+# Background work
+celery[redis]==5.6.3
+redis==6.4.0
+
+# Misc
+python-dotenv==1.2.3
+requests==2.34.2
+
+# AI agents. Optional at run time and imported lazily (apps/agents/provider.py):
+# on a machine without it — or without ANTHROPIC_API_KEY — `provider.is_available()`
+# is false, the «AI agent» block reports «sozlanmagan» and takes its exit, and
+# nothing else in the runtime changes. The test suite never imports it.
+anthropic>=1.0

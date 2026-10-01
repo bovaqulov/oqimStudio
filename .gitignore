@@ -1,0 +1,91 @@
+# dependencies
+node_modules/
+npm-cache/
+
+# next.js
+.next/
+/out/
+
+# production
+/build
+
+# env
+.env
+.env.local
+.env.*.local
+.venv/
+db.sqlite3
+
+# django
+staticfiles/
+media/
+celerybeat-schedule*
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# misc
+# Personal Claude Code state — permissions, local settings, transcripts.
+# `.claude/*` and not `.claude/`: git cannot re-include anything inside a
+# directory it was told to exclude, so excluding the *contents* is what leaves
+# room for the exception below.
+.claude/*
+# …the skills, which are documentation about *this* codebase and are useless on
+# the machine that wrote them. They carry what a fresh reader — or a fresh
+# agent — otherwise rediscovers by breaking something: the stand's bring-up
+# order, the seven places a block type has to be registered, why the invite
+# preview is a separate endpoint. Ignored, a clone got none of it.
+!.claude/skills/
+.DS_Store
+*.pem
+npm-debug.log*
+.pnpm-debug.log*
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# claude code (personal, not for the team)
+.claude/settings.local.json
+
+# Backend runtime logs (DJANGO_LOG_FILE)
+backend/logs/
+
+# Where a dev server's output lands when it is started detached.
+#
+# `runserver`, `next dev` and `next start` all get redirected to a file so the
+# process can be left running and read back later. They are a transcript of one
+# machine's afternoon: full of local ports, tunnel hostnames and stack traces,
+# and different for every person who runs them.
+*.out
+*.err
+*.err.prev
+
+# Redis's own snapshot. Celery's broker writes it into whatever directory it
+# was started from, which is why it turns up under frontend/ rather than
+# anywhere sensible.
+*.rdb
+
+# SQLite, in all the shapes it takes. `db.sqlite3` is already ignored above;
+# these are the sidecars it opens beside it and the copies a person makes
+# before doing something irreversible.
+db.sqlite3.bak*
+*.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm
+
+# Debug `next dev` build dir (NEXT_DIST_DIR)
+frontend/.next-dev/
+frontend/.next-check/
+
+# Compiled leftovers from running a single .ts file directly (node
+# --experimental-strip-types, tsc on one file). A stale .js beside its .ts is a
+# module the bundler may pick instead of the source.
+frontend/src/**/*.js

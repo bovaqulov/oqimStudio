@@ -1,0 +1,44 @@
+{
+  "name": "oqim-studio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Oqim Studio — Telegram bot avtomatlashtirish va vizual oqim muharriri.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "check:comments": "node scripts/check-comments.mjs",
+    "check:effects": "node scripts/check-render-effects.mjs",
+    "check:classes": "node scripts/check-classes.mjs",
+    "verify": "npm run check:comments && npm run check:effects && npm run check:classes && npm run typecheck && npm run lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@codemirror/autocomplete": "^6.20.3",
+    "@codemirror/commands": "^6.11.0",
+    "@codemirror/lang-javascript": "^6.2.5",
+    "@codemirror/language": "^6.12.4",
+    "@codemirror/lint": "^6.9.7",
+    "@codemirror/state": "^6.7.2",
+    "@codemirror/view": "^6.43.10",
+    "@lezer/highlight": "^1.2.3",
+    "@phosphor-icons/react": "^2.1.10",
+    "clsx": "^2.1.1",
+    "next": "^16.3.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "server-only": "^0.0.1",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,1154 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens.
+ * Single source of truth for color / radius / shadow — every component
+ * consumes these via Tailwind utilities (bg-accent-500, border-neutral-800…)
+ * or, where a raw CSS value is unavoidable (SVG stroke on the flow canvas),
+ * via var(--color-…) directly. Never hardcode a hex value in a component;
+ * add or reuse a token here instead (DRY).
+ *
+ * The palette is Telegram's own dark ("Night") theme, so the studio reads as
+ * part of the client it builds bots for: #0e1621 chat ground, #17212b panels,
+ * #232e3c hover, #2b5278 selection, #62a3e3 links. TelegramPreview shares
+ * these exact values — it is the reference the rest of the UI now matches.
+ */
+@theme {
+  /*
+   * The system stack first, Inter as the shipped fallback. Inside Telegram on
+   * iOS this resolves to SF Pro, which is what makes the app read as part of
+   * the client rather than as a web page inside it.
+   */
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", var(--font-inter), Inter, system-ui, sans-serif;
+
+  /*
+   * True black ground.
+   *
+   * The chrome is no longer a set of bars attached to the edges — it is a few
+   * capsules floating clear of them, and a floating panel only reads as
+   * floating if there is something dark behind it to float on. #17212b was a
+   * panel colour standing in for a page; at #000 the glass has contrast to
+   * work with and an OLED phone stops lighting those pixels at all.
+   */
+  --color-bg: #000000;
+  --color-surface: rgba(255, 255, 255, 0.055);
+  --color-surface-raised: rgba(255, 255, 255, 0.085);
+  --color-text: #ffffff;
+
+  /*
+   * Secondary and tertiary text are the same ink at less opacity, not separate
+   * greys — Apple's own method, and the reason a label reads the same way on a
+   * card, on a sheet and on the chat ground without three tokens for it.
+   */
+  --color-separator: color-mix(in srgb, var(--color-text) 7%, transparent);
+  --color-fill: color-mix(in srgb, var(--color-text) 8%, transparent);
+
+  /*
+   * The floating chrome, as numbers rather than as magic values sprinkled over
+   * three components. Every capsule — the top bar, the section tabs, the dock —
+   * is inset from the screen edge by the same amount and blurs the same way, so
+   * they read as one system rather than as three panels that happen to be round.
+   */
+  --island-inset: 12px;
+  --island-radius: 20px;
+  --island-blur: blur(24px) saturate(180%);
+  --island-fill: rgba(255, 255, 255, 0.07);
+  --island-hairline: rgba(255, 255, 255, 0.1);
+  --island-active: rgba(255, 255, 255, 0.14);
+  --island-muted: rgba(255, 255, 255, 0.55);
+
+  --color-accent: #2aabee;
+  --color-accent-50: color-mix(in srgb, var(--color-accent) 6%, transparent);
+  --color-accent-100: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  --color-accent-200: #a9dff8;
+  --color-accent-300: #7acdf4;
+  --color-accent-400: #4fbcf1;
+  --color-accent-500: #2aabee;
+  --color-accent-600: #1e9ad9;
+  /* The one filled blue. Every `bg-accent-700` in the app is a primary button. */
+  --color-accent-700: #2aabee;
+  --color-accent-800: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  --color-accent-900: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  --color-accent-950: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  /*
+   * The ink that belongs on 800/900. It exists because the obvious answer is
+   * wrong in exactly one theme and right in the other, which is how it survived
+   * so long: `text-white` on `bg-accent-800` is white on translucent blue over
+   * near-black here, and white on #d8ecff — 1.3:1, unreadable — in the light
+   * theme. The selected sidebar row was the report; the same pair was in the
+   * nav groups, the icon buttons and half the inspector fields.
+   *
+   * `text-accent-100` was the other half of the same mistake in the other
+   * direction: 50–100 are 6–10% tints meant for fills, so as ink they were
+   * pale-on-pale in the light theme and dark-on-dark in this one.
+   */
+  --color-accent-ink: #a9dff8;
+
+  /* 50–700 are ink at decreasing opacity; 800–950 are surfaces and hairlines. */
+  --color-neutral-50: #ffffff;
+  --color-neutral-100: color-mix(in srgb, var(--color-text) 92%, transparent);
+  --color-neutral-200: color-mix(in srgb, var(--color-text) 82%, transparent);
+  --color-neutral-300: color-mix(in srgb, var(--color-text) 70%, transparent);
+  --color-neutral-400: color-mix(in srgb, var(--color-text) 60%, transparent);
+  --color-neutral-500: color-mix(in srgb, var(--color-text) 60%, transparent);
+  --color-neutral-600: color-mix(in srgb, var(--color-text) 40%, transparent);
+  --color-neutral-700: color-mix(in srgb, var(--color-text) 28%, transparent);
+  /*
+   * Fills, not panels.
+   *
+   * On the old #17212b ground these were four opaque blue-greys. On true black
+   * an opaque fill reads as a box sitting on the page rather than as part of
+   * it, so they became translucent ink the way iOS's system fills are — they
+   * stack correctly inside a card that is itself translucent, and they follow
+   * a Telegram theme's own text colour for free.
+   *
+   * 950 stays opaque: it is the popover and tooltip ground, and a see-through
+   * menu floating over a list is unreadable.
+   */
+  --color-neutral-800: color-mix(in srgb, var(--color-text) 9%, transparent);
+  --color-neutral-850: color-mix(in srgb, var(--color-text) 6%, transparent);
+  --color-neutral-900: color-mix(in srgb, var(--color-text) 4%, transparent);
+  --color-neutral-950: #141414;
+
+  /*
+   * The ground under anything that floats over content.
+   *
+   * `--color-surface` is a translucent ink fill now, which is right for a card
+   * lying on the page — it lets the black through and reads as part of it. It
+   * is exactly wrong for a menu, a popover, a sheet or a toast: those cover
+   * content, and a see-through cover is unreadable. The analytics filter
+   * popover was legible right through to the numbers behind it.
+   *
+   * Opaque, and a step lighter than the page so the elevation still reads.
+   */
+  --color-overlay: #1c1c1e;
+
+  --color-success-fg: #34c759;
+  --color-success-bg: color-mix(in srgb, #34c759 16%, transparent);
+  --color-warning-fg: #ff9500;
+  --color-warning-bg: color-mix(in srgb, #ff9500 16%, transparent);
+  --color-danger-fg: #ff3b30;
+  --color-danger-bg: color-mix(in srgb, #ff3b30 16%, transparent);
+  /* The fourth tone, for a state that is neither good, bad nor a warning — an
+     agent handing a conversation to a person is the flow working. Blue rather
+     than the accent so it cannot be mistaken for something to tap. */
+  --color-info-fg: #5ea9ee;
+  --color-info-bg: color-mix(in srgb, #5ea9ee 16%, transparent);
+  --color-neutral-tone-bg: color-mix(in srgb, var(--color-text) 10%, transparent);
+  --color-neutral-tone-fg: color-mix(in srgb, var(--color-text) 60%, transparent);
+
+  /* Telegram's brand gradient — logo mark and other brand-level surfaces only. */
+  --color-brand-from: #2aabee;
+  --color-brand-to: #229ed9;
+
+  /* 8 marker · 12 control · 16 card · 22 sheet · pill. Nothing in between. */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-sheet: 22px;
+  --radius-full: 999px;
+
+  /* Dark has no shadow: a raised surface is a lighter surface. */
+  --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.24);
+  --shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.4);
+}
+
+/*
+ * Motion. One curve for state, one for a sheet, and nothing that overshoots —
+ * a bounce says "toy" on a screen the reader is trying to fill in.
+ */
+:root {
+  --ease-standard: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+  --duration-standard: 200ms;
+  --duration-sheet: 300ms;
+}
+
+
+/*
+ * Light theme.
+ *
+ * Every component reads colour through the tokens above, so the light theme is
+ * a second set of values for the same names rather than a second stylesheet:
+ * the neutral ramp is inverted (50 becomes the darkest, 950 the lightest), and
+ * the accents that read as fills on dark become tints on light. `data-theme`
+ * is written by the toggle and applied before first paint by the inline script
+ * in the root layout, so there is no flash of the wrong theme.
+ */
+:root[data-theme="light"] {
+  --color-bg: #ffffff;
+  --color-surface: rgba(0, 0, 0, 0.05);
+  --color-surface-raised: rgba(0, 0, 0, 0.08);
+  --color-text: #000000;
+
+  --color-accent: #007aff;
+  --color-accent-200: #0062cc;
+  --color-accent-300: #0069d9;
+  --color-accent-400: #007aff;
+  --color-accent-500: #007aff;
+  --color-accent-600: #0062cc;
+  --color-accent-700: #007aff;
+  --color-accent-800: #d8ecff;
+  --color-accent-900: #e9f4ff;
+  --color-accent-950: #f3f9ff;
+  /* 5.6:1 on #d8ecff — the pale-blue tint is a background, so its ink is the
+     strong blue rather than white. See the dark-theme note beside this token. */
+  --color-accent-ink: #0062cc;
+
+  /*
+   * Ink on white needs more of itself than ink on near-black.
+   *
+   * The ramp is one formula — `--color-text` at decreasing opacity — but the
+   * *same* opacity is not the same contrast in both themes: 40% white on
+   * #17212b reads at about 6.5:1, while 40% black on #ffffff reads at 2.9:1 and
+   * fails WCAG AA. Only the percentages move; the method does not.
+   *
+   * Written as literal black here, and re-declared through `--color-text` in
+   * the `@supports` block below. The build minifier folds a `color-mix()` into
+   * a static fallback for browsers that lack it — and it resolves
+   * `var(--color-text)` against `:root`, which is the *dark* value, so the
+   * fallback it generated for this block was white ink on a white page. That is
+   * invisible text, not merely low contrast, on any WebView older than
+   * color-mix (roughly pre-2023 iOS). The literal is what those browsers get.
+   */
+  --color-neutral-300: #000000c2;
+  --color-neutral-400: #000000a8;
+  --color-neutral-500: #000000a8;
+  --color-neutral-600: #0000008f;
+  --color-neutral-700: #0000008c;
+
+  --color-neutral-50: #000000;
+  --color-neutral-800: #0000000f;
+  --color-neutral-850: #0000000a;
+  --color-neutral-900: #00000008;
+  --color-neutral-950: #f2f2f7;
+  --color-overlay: #ffffff;
+
+  --color-success-fg: #248a3d;
+  --color-warning-fg: #b25000;
+  --color-danger-fg: #d70015;
+  /* Darkened for ink on white, like the three above it. The `-bg` tints are
+     color-mixes of the dark theme's own hue and need no light-theme twin. */
+  --color-info-fg: #1a5fb4;
+
+  /* Ink on white, so the glass darkens the page rather than lightening it. */
+  --island-fill: rgba(0, 0, 0, 0.05);
+  --island-hairline: rgba(0, 0, 0, 0.08);
+  --island-active: rgba(0, 0, 0, 0.1);
+  --island-muted: rgba(0, 0, 0, 0.55);
+
+  --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 28px rgba(19, 40, 66, 0.12);
+}
+
+/*
+ * The same five levels, derived rather than literal, for every browser that can
+ * do it. Written as an explicit `@supports` rather than as a second declaration
+ * in the block above so the minifier cannot collapse the pair back into one.
+ */
+@supports (color: color-mix(in srgb, red 50%, transparent)) {
+  :root[data-theme="light"] {
+    --color-neutral-300: color-mix(in srgb, var(--color-text) 76%, transparent);
+    --color-neutral-400: color-mix(in srgb, var(--color-text) 66%, transparent);
+    --color-neutral-500: color-mix(in srgb, var(--color-text) 66%, transparent);
+    --color-neutral-600: color-mix(in srgb, var(--color-text) 56%, transparent);
+    --color-neutral-700: color-mix(in srgb, var(--color-text) 55%, transparent);
+  }
+}
+
+/* The canvas grid dots and the chat preview are painted from raw values, so
+   they get their light counterparts here rather than inside the components. */
+:root[data-theme="light"] .oq-edge-core {
+  opacity: 0.75;
+}
+
+
+/*
+ * Rejected submit. A form that only swaps a line of red text can be missed
+ * entirely at the moment of the click — one short nudge says "look here"
+ * without becoming decoration. Well under the 3-flashes-per-second threshold,
+ * and switched off with the rest under reduced motion.
+ */
+@keyframes oq-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+}
+.animate-shake {
+  animation: oq-shake 0.18s ease-in-out;
+}
+
+@keyframes oq-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes oq-dash {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+/*
+ * Progressive disclosure. Settings that appear because you ticked an option
+ * grow into place instead of snapping in. Animating `grid-template-rows`
+ * between 0fr and 1fr is what lets this work for content of any height —
+ * nothing has to measure the panel or hardcode a max-height.
+ */
+@keyframes oq-reveal {
+  from {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+  to {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+}
+@keyframes oq-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/*
+ * Element defaults live in `@layer base` — never unlayered. Unlayered CSS wins
+ * over everything Tailwind emits (its utilities sit in `@layer utilities`), so
+ * a bare `a { color }` here would quietly beat `text-neutral-400` on a nav row,
+ * and `input { font-family }` would beat `font-mono` on a regex field. Inside
+ * the layer these stay defaults: a component that says otherwise gets its way.
+ */
+@layer base {
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--color-bg);
+    color: var(--color-text);
+  }
+
+  /*
+   * Tells the browser which way round its *own* widgets go.
+   *
+   * Without it a native control is drawn light whatever the page does — and a
+   * `<select>`'s dropdown is drawn by the OS, outside the document, where none
+   * of our CSS reaches. The options inherited the field's ink, which is white
+   * at 82% opacity, and landed on that white popup: a list of flows that was
+   * there, tall, and completely invisible.
+   *
+   * It fixes the same class of thing for date pickers, scrollbars, spinners and
+   * the caret — every place the browser has been picking a light default
+   * against a black page.
+   */
+  :root {
+    color-scheme: dark;
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+  }
+
+  /*
+   * And the belt to that pair of braces. `color-scheme` is what modern browsers
+   * act on, but an option's colours are still worth stating outright: they are
+   * the one piece of text in the product rendered somewhere our tokens are only
+   * a suggestion, so they get opaque values rather than ink-at-82%.
+   */
+  option {
+    background-color: var(--color-overlay);
+    color: var(--color-text);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    /* Subheadline. Anything that wants to be smaller has to say so, and the
+       floor below stops it saying so on a phone. */
+    font-size: 15px;
+    line-height: 20px;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  a {
+    color: var(--color-accent-400);
+    text-decoration: none;
+  }
+  a:hover {
+    color: var(--color-accent-300);
+  }
+}
+
+/*
+ * The select's own caret.
+ *
+ * A native `<select>` draws an indicator the browser picks, at a position the
+ * browser picks — which on the settings form sat hard against the right edge of
+ * the well and looked nothing like the chevron every other control here uses.
+ * `appearance: none` takes it off and this puts ours back, with the text
+ * stopped short of it by the padding the utility class sets.
+ */
+.oq-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23888888' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6.5 8 10.5 12 6.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 13px center;
+  background-size: 15px 15px;
+}
+.oq-select::-ms-expand {
+  display: none;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-neutral-800);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+@layer base {
+  input,
+  textarea,
+  select,
+  button {
+    font-family: inherit;
+  }
+  /*
+   * The keyboard focus ring. A control that draws its own — a text field inside
+   * a composed well, where the ring belongs around the whole well rather than
+   * the bare <input> — opts out with `focus-visible:outline-none`, which only
+   * works because this rule is layered.
+   */
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  button:focus-visible,
+  select:focus-visible {
+    outline: 2px solid var(--color-accent-500);
+    outline-offset: 2px;
+  }
+}
+
+.animate-rise {
+  animation: oq-rise var(--duration-standard) var(--ease-standard);
+}
+
+/*
+ * Skeleton breathing. Slow and shallow on purpose — a placeholder that pulses
+ * hard reads as a broken control rather than as something on its way.
+ */
+@keyframes oq-skeleton {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+.animate-pulse-soft {
+  animation: oq-skeleton 1.4s var(--ease-standard) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-soft {
+    animation: none;
+    opacity: 0.7;
+  }
+}
+
+/*
+ * Nav click acknowledgement (see NavPendingDot). Always in the layout at a
+ * fixed size, so revealing it never nudges the row it sits in. The delay is
+ * what keeps it honest: a navigation that lands quickly finishes before the
+ * dot ever fades in, and only a genuinely slow one gets a pulse.
+ */
+@keyframes oq-nav-pending {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+.nav-pending-dot {
+  width: 5px;
+  height: 5px;
+  flex: none;
+  border-radius: 9999px;
+  background: currentColor;
+  opacity: 0;
+}
+.nav-pending-dot.is-pending {
+  animation: oq-nav-pending 0.9s ease-in-out 0.12s infinite;
+}
+
+/* Pair with an `overflow-hidden` child — that is what the collapsed row clips against. */
+.animate-reveal {
+  display: grid;
+  grid-template-rows: 1fr;
+  animation: oq-reveal 0.2s ease;
+}
+
+/*
+ * "It is over here." Jumping to a section from a summary chip moves the scroll
+ * position, which on its own leaves the reader hunting for what changed — the
+ * wash of accent says which block they were sent to and then gets out of the
+ * way.
+ */
+@keyframes oq-flash {
+  from {
+    background: color-mix(in srgb, var(--color-accent-500) 22%, transparent);
+  }
+  to {
+    background: transparent;
+  }
+}
+.animate-flash {
+  animation: oq-flash 1.1s ease-out;
+  border-radius: var(--radius-md);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise,
+  .animate-reveal,
+  .animate-flash,
+  .animate-shake {
+    animation: none;
+  }
+  /* Dropping the animation would leave the dot at opacity 0 — still say
+     something happened, just without the pulse. */
+  .nav-pending-dot.is-pending {
+    animation: none;
+    opacity: 0.7;
+  }
+}
+
+/*
+ * Flow canvas edges.
+ * Baseline is semi-transparent and glow-free; hovering (or a future
+ * `.is-flowing` state once the builder gains a real execution-preview
+ * signal to drive it) brings the line to full solid opacity plus a
+ * neon-accent halo. Colors are per-edge via the --edge-color/--edge-glow
+ * custom properties set inline on each <g> (edge tone — yes/no/plain —
+ * isn't known to CSS, only to the component).
+ */
+.oq-edge-group {
+  cursor: pointer;
+}
+.oq-edge-core {
+  opacity: 0.55;
+  transition:
+    opacity 0.16s ease,
+    filter 0.16s ease;
+}
+.oq-edge-glow {
+  opacity: 0;
+  transition: opacity 0.16s ease;
+}
+.oq-edge-group:hover .oq-edge-core {
+  opacity: 1;
+  filter: drop-shadow(0 0 4px var(--edge-color));
+}
+.oq-edge-group:hover .oq-edge-glow {
+  opacity: 1;
+}
+.oq-edge-group.is-flowing .oq-edge-core {
+  opacity: 1;
+  animation: oq-pulse 1.1s ease-in-out infinite;
+}
+/* Picked out with a click — reads like hover, and holds while the edge stays chosen. */
+.oq-edge-group.is-selected .oq-edge-core {
+  opacity: 1;
+  filter: drop-shadow(0 0 4px var(--edge-color));
+}
+.oq-edge-group.is-selected .oq-edge-glow {
+  opacity: 1;
+}
+.oq-edge-label-bg {
+  transition: opacity 0.16s ease;
+  opacity: 0.82;
+}
+.oq-edge-group:hover .oq-edge-label-bg {
+  opacity: 1;
+}
+/* A chip that only repeats a button row already printed on the card (`is-quiet`)
+   stays hidden until the reader hovers the line. A selected edge shows its
+   remove control at the chip's spot instead, so there is no chip to reveal. */
+.oq-edge-label {
+  transition: opacity 0.16s ease;
+}
+.oq-edge-group.is-quiet .oq-edge-label {
+  opacity: 0;
+}
+.oq-edge-group.is-quiet:hover .oq-edge-label {
+  opacity: 1;
+}
+
+/* Node ports — a matching neon-accent ring on hover/focus, color set per-port via --port-glow. */
+.oq-port {
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+.oq-port:hover,
+.oq-port:focus-visible {
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--port-glow) 30%, transparent),
+    0 0 8px 2px color-mix(in srgb, var(--port-glow) 65%, transparent);
+}
+
+/* ---------------------------------------------------------------------------
+ * Touch input
+ *
+ * A finger is not a mouse pointer, and two of this interface's habits assume it
+ * is: a control that only appears on hover never appears at all, and a 17px
+ * target is not reachable. `pointer: coarse` is the standard way to ask "is the
+ * primary input a finger" — it leaves every mouse-driven layout exactly as it
+ * was.
+ * ------------------------------------------------------------------------- */
+
+@media (pointer: coarse), (max-width: 767.98px) {
+  /*
+   * Below 16px, iOS Safari zooms the page when a field is focused, and the
+   * reader reads that as the layout jumping away from them. `max` keeps
+   * anything already larger at its own size.
+   */
+  input,
+  textarea,
+  select {
+    font-size: max(16px, 1em);
+  }
+
+  /*
+   * Expands a small control's hit box to the 44px everyone's guidelines ask
+   * for, without changing what is drawn or how anything lays out. The element
+   * needs its own stacking position, which `relative` in the class list gives
+   * it.
+   */
+  .oq-tap::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/*
+ * A sheet arrives from the edge it is anchored to. `animate-rise` (a 6px lift
+ * and a fade) reads as a dialog appearing in place, which is the wrong promise
+ * on a phone: the gesture that dismisses it is downward, so the entrance has to
+ * be upward and long enough to be seen.
+ */
+@keyframes oq-sheet {
+  from {
+    transform: translateY(16%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.animate-sheet {
+  animation: oq-sheet var(--duration-sheet) var(--ease-sheet);
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-sheet {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Telegram Mini App
+
+   `data-tg` is set before the first paint (see `app/layout.tsx`) and cleared
+   again by the gate if the guess was wrong. Doing this in CSS rather than in a
+   component is what keeps the password form from flashing up in front of
+   somebody Telegram has already identified.
+   --------------------------------------------------------------------------- */
+[data-tg-hide] {
+  display: contents;
+}
+[data-tg-only] {
+  display: none;
+}
+html[data-tg="1"] [data-tg-hide] {
+  display: none;
+}
+html[data-tg="1"] [data-tg-only] {
+  display: contents;
+}
+
+/* The client's own close button and the phone's home indicator overlap our
+   chrome in a fullscreen Mini App; these are 0 everywhere else. */
+:root {
+  --tg-inset-top: 0px;
+  --tg-inset-bottom: 0px;
+}
+
+/* A separator that starts where the text does, not at the card's edge — the
+   detail that makes a stack of rows read as one list rather than as rows. */
+.oq-hairline::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 1px;
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+
+
+/* ---------------------------------------------------------------------------
+   Type scale
+
+   Apple's, named the way its documentation names it. Seven sizes for the whole
+   product: a screen that needs an eighth is a screen with an invented level of
+   hierarchy. Weight is part of the token — the reason the audit found one bold
+   element on a whole page is that size was being asked to carry hierarchy on
+   its own, and 13 versus 12 is not a hierarchy anybody can see.
+   --------------------------------------------------------------------------- */
+@layer components {
+  .t-large-title {
+    font-size: 34px;
+    line-height: 41px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .t-title2 {
+    font-size: 22px;
+    line-height: 28px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .t-headline {
+    font-size: 17px;
+    line-height: 22px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .t-body {
+    font-size: 17px;
+    line-height: 22px;
+    font-weight: 400;
+  }
+  .t-subhead {
+    font-size: 15px;
+    line-height: 20px;
+    font-weight: 400;
+  }
+  .t-footnote {
+    font-size: 13px;
+    line-height: 18px;
+    font-weight: 400;
+  }
+  .t-caption {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 500;
+  }
+
+  /* Ink levels. Secondary and tertiary are opacity, never a second grey. */
+  .t-secondary {
+    color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  }
+  .t-tertiary {
+    color: color-mix(in srgb, var(--color-text) 40%, transparent);
+  }
+
+  /* The same two levels, re-weighted for ink on white — see the light block,
+     including why the literal comes first and the derived value second. */
+  :root[data-theme="light"] .t-secondary {
+    color: #000000a8;
+  }
+  :root[data-theme="light"] .t-tertiary {
+    color: #0000008f;
+  }
+
+  /* Inside the layer, so these still lose to a colour utility written on the
+     same element — an `@supports` block of its own would be unlayered and
+     would quietly outrank every one of them. */
+  @supports (color: color-mix(in srgb, red 50%, transparent)) {
+    :root[data-theme="light"] .t-secondary {
+      color: color-mix(in srgb, var(--color-text) 66%, transparent);
+    }
+    :root[data-theme="light"] .t-tertiary {
+      color: color-mix(in srgb, var(--color-text) 56%, transparent);
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Phone font floor
+
+   Roughly four hundred call sites in this codebase ask for 9.5–12.5px, which is
+   a desktop density that was never re-decided for a Mini App. Rather than a
+   sweep that would go stale on the next screen somebody writes, the floor is a
+   rule: below `md`, nothing renders under 13px.
+
+   Unlayered on purpose — that is what lets it beat a `text-[11px]` utility. The
+   `:not()` steps aside for a call site that already raised itself on a phone
+   (`max-md:text-[15px]`), so the floor only ever lifts, never flattens.
+   --------------------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+  .text-\[9px\]:not([class*="max-md:text-"]):not([class*="pointer-coarse:text-"]),
+  .text-\[9\.5px\]:not([class*="max-md:text-"]):not([class*="pointer-coarse:text-"]),
+  .text-\[10px\]:not([class*="max-md:text-"]):not([class*="pointer-coarse:text-"]),
+  .text-\[10\.5px\]:not([class*="max-md:text-"]):not([class*="pointer-coarse:text-"]),
+  .text-\[11px\]:not([class*="max-md:text-"]):not([class*="pointer-coarse:text-"]),
+  .text-\[11\.5px\]:not([class*="max-md:text-"]):not([class*="pointer-coarse:text-"]),
+  .text-\[12px\]:not([class*="max-md:text-"]):not([class*="pointer-coarse:text-"]),
+  .text-\[12\.5px\]:not([class*="max-md:text-"]):not([class*="pointer-coarse:text-"]) {
+    font-size: 13px;
+    line-height: 18px;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   iOS grouped list
+
+   The shape the settings and payments screens are built from: a rounded card
+   holding full-bleed rows, each at least 44px, each separated by a hairline
+   that starts where the text does. Written once here because it is a *shape*,
+   not a component — a row can be a link, a button, a label wrapping a switch,
+   or a form field, and all four have to line up.
+   --------------------------------------------------------------------------- */
+.oq-group {
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  border: 0.5px solid var(--color-separator);
+  background: var(--color-surface);
+}
+
+.oq-row {
+  position: relative;
+  display: flex;
+  min-height: 44px;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  text-align: left;
+  transition: background-color 120ms var(--ease-standard);
+}
+
+.oq-row + .oq-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 0;
+  height: 0.5px;
+  background: var(--color-separator);
+}
+
+/* The separator follows the icon in when one is present. */
+.oq-group[data-inset="icon"] .oq-row + .oq-row::before {
+  left: 56px;
+}
+
+a.oq-row:active,
+button.oq-row:not(:disabled):active,
+label.oq-row:active {
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+
+/* ---------------------------------------------------------------------------
+   Press feedback
+
+   A 3% shrink under the finger, on the standard curve. Paired with a haptic at
+   the call site — together they are what makes a tap feel like it landed on a
+   control rather than on a picture of one.
+   --------------------------------------------------------------------------- */
+.oq-press {
+  transition: transform 120ms var(--ease-standard);
+}
+.oq-press:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oq-press:active {
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Safe area
+
+   `--tg-inset-bottom` is Telegram's own (a fullscreen Mini App over the home
+   indicator); `env(safe-area-inset-bottom)` is the browser's. Whichever is
+   larger is the one that keeps a button off the home bar, and `max()` picks it
+   without either side having to know about the other.
+   --------------------------------------------------------------------------- */
+.oq-safe-bottom {
+  padding-bottom: max(var(--tg-inset-bottom, 0px), env(safe-area-inset-bottom));
+}
+
+/*
+ * The height a full-height panel may take. Inside Telegram this is
+ * `viewportStableHeight` — the sheet minus the on-screen keyboard — which is
+ * what stops the bottom bar being pushed under the keyboard when a field is
+ * focused. Outside, it falls back to the dynamic viewport.
+ */
+.oq-viewport {
+  height: var(--tg-viewport, 100dvh);
+}
+
+/*
+ * The bottom edge, shared out.
+ *
+ * Two things want to sit against it — the tab bar and a screen's primary action
+ * — and only one of them may own the home indicator's clearance or the reader
+ * gets a band of dead space. `--oq-tabbar` is how much room the bar takes;
+ * `--oq-tabbar-safe` is whatever safe-area padding it did *not* already
+ * consume, which is what an action bar above it must add for itself.
+ *
+ * Declared on `:root` so a screen with no tab bar (the flow editor) reads zero
+ * and owns the edge itself, and re-declared by the app shell that draws one.
+ */
+:root {
+  --oq-tabbar: 0px;
+  --oq-tabbar-safe: env(safe-area-inset-bottom);
+}
+
+.oq-has-tabbar {
+  /*
+   * 56 (the dock capsule) + 12 (its lift off the bottom edge) = the top edge of
+   * the dock. The 12px of clearance every consumer wants above that is added by
+   * the consumers themselves, so a screen with no dock gets the same 12px off
+   * the bottom of the display instead of nothing.
+   *
+   * The dock's own offset already swallows the home-indicator inset, which is
+   * why `--oq-tabbar-safe` is zero here: anything positioned from
+   * `--oq-tabbar` is clear of it by construction.
+   */
+  --oq-tabbar: calc(68px + max(var(--tg-inset-bottom, 0px), env(safe-area-inset-bottom)));
+  --oq-tabbar-safe: 0px;
+}
+
+@media (min-width: 768px) {
+  .oq-has-tabbar {
+    --oq-tabbar: 0px;
+    --oq-tabbar-safe: env(safe-area-inset-bottom);
+  }
+}
+
+/** Room at the end of a scrolling page for the dock drawn over it, plus the
+    12px of air that keeps the last row from touching the capsule. */
+.oq-tabbar-inset {
+  padding-bottom: calc(var(--oq-tabbar) + 12px);
+}
+
+/**
+ * The in-page stand-in for Telegram's MainButton, in a browser that has none.
+ * Sits directly above the tab bar when there is one, and on the bottom edge
+ * when there is not.
+ */
+.oq-actionbar {
+  position: fixed;
+  /* `left`/`right` rather than `inset-inline`: the same result, and the one a
+     devtools inspector shows without expanding a shorthand. */
+  left: var(--island-inset);
+  right: var(--island-inset);
+  bottom: calc(var(--oq-tabbar) + var(--oq-tabbar-safe) + 12px);
+}
+
+/*
+ * On a desktop it stops being a bar.
+ *
+ * Spanning the window is what a phone footer does, and it is what this did
+ * until a 1920px screen showed the result: a blue slab the width of the
+ * display, running under the sidebar, for one button. Here it is a button
+ * again — bottom right, its own width, clear of the sidebar because it is
+ * anchored to the opposite edge.
+ */
+@media (min-width: 768px) {
+  .oq-actionbar {
+    left: auto;
+    right: 24px;
+    bottom: 24px;
+    width: auto;
+  }
+}
+
+
+/* ---------------------------------------------------------------------------
+   Floating chrome
+
+   One shape, three uses: the bar at the top, the section tabs under it, the
+   dock at the bottom. Each is inset from the screen edge rather than welded to
+   it, and the page scrolls *underneath* — which is the whole reason for the
+   blur. A capsule over an opaque strip is just a bar with round corners.
+   --------------------------------------------------------------------------- */
+.oq-island {
+  background: var(--island-fill);
+  border: 0.5px solid var(--island-hairline);
+  -webkit-backdrop-filter: var(--island-blur);
+  backdrop-filter: var(--island-blur);
+}
+
+/*
+ * No blur available — an old WebView, or a browser with it switched off. A
+ * see-through panel with nothing behind it is unreadable, so those get an
+ * opaque one instead. The geometry does not change.
+ */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .oq-island {
+    background: color-mix(in srgb, var(--color-bg) 88%, var(--color-text));
+  }
+}
+
+/** The strip a floating top bar covers, and the one the dock covers. */
+.oq-island-top {
+  padding-top: calc(env(safe-area-inset-top) + var(--tg-inset-top, 0px) + 6px);
+}
+
+/*
+ * The section strip, parked 8px under the top bar.
+ *
+ * 6 (top inset) + 40 (bar) + 8 (gap) = 54, which is where this starts, and
+ * 54 + 38 (its own height) + 14 (breathing) = 106, which is what
+ * `.oq-scroll-under-tabs` leaves above the first row. The two numbers are one
+ * arithmetic, so a change to the bar's height has to move both.
+ */
+.oq-island-tabs {
+  position: fixed;
+  left: var(--island-inset);
+  right: var(--island-inset);
+  top: calc(env(safe-area-inset-top) + var(--tg-inset-top, 0px) + 54px);
+  z-index: 30;
+}
+
+@media (min-width: 768px) {
+  .oq-island-tabs {
+    position: static;
+    left: auto;
+    right: auto;
+    top: auto;
+  }
+}
+
+/*
+ * Room for the chrome the page slides under. Generous on purpose: the last row
+ * of a list has to clear the dock, and the first has to clear the bar *and* the
+ * section tabs when a screen has them.
+ */
+.oq-scroll-under {
+  padding-top: calc(env(safe-area-inset-top) + var(--tg-inset-top, 0px) + 58px);
+}
+
+.oq-scroll-under-tabs {
+  padding-top: calc(env(safe-area-inset-top) + var(--tg-inset-top, 0px) + 106px);
+}
+
+/*
+ * On a desktop the chrome above is a real row with a hairline under it, not a
+ * floating capsule, so none of that clearance is owed any more — but zero is
+ * not the answer either: it welds the first card to the hairline, and the
+ * chats screen read as a title, a workspace name and a search field stacked
+ * with nothing between them.
+ *
+ * The 28px lives here and not as a breakpoint-prefixed padding utility on the
+ * element, which is where it was written and where it never once applied. This
+ * rule is unlayered and Tailwind emits its utilities inside `@layer utilities`;
+ * unlayered CSS beats every layer regardless of order, so the utility lost the
+ * cascade silently on all twenty pages. The same trap the `@layer base` note
+ * above is about — and naming the class in prose is its own trap, because the
+ * scanner reads comments too and would emit the dead rule all over again.
+ */
+@media (min-width: 768px) {
+  .oq-scroll-under,
+  .oq-scroll-under-tabs {
+    padding-top: 28px;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Sidebar rail
+
+   The collapsed sidebar is drawn here rather than in the components, because
+   the choice has to be honoured before React exists. The inline script in the
+   root layout stamps `data-rail` on <html> from localStorage, so the very first
+   paint is already narrow; a `rail ? … : …` in the markup could only arrive
+   with hydration, and would drag the whole page sideways once it did. Same
+   reasoning as the theme attribute next to it — and the same division of
+   labour: the store decides, the attribute paints.
+
+   `lg` and up only, where the sidebar is a permanent column. The tablet drawer
+   is an overlay the reader opened on purpose and a phone never draws the
+   sidebar at all, so neither has a rail to be in — which is also what lets the
+   components read `rail && !drawer` instead of measuring the viewport.
+
+   Unlayered, like the phone font floor above and for the same reason: it has to
+   beat the `w-[228px]` utility written on the element itself.
+   --------------------------------------------------------------------------- */
+@media (min-width: 1024px) {
+  :root[data-rail="1"] .oq-sidebar {
+    width: 56px;
+  }
+
+  /* Everything that needs width to mean anything: labels, the ⌘K hint, the
+     caret, a section's children. The icon is what is left, and the row's
+     `title` is what names it once its text is gone. */
+  :root[data-rail="1"] .oq-sidebar .oq-rail-hide {
+    display: none;
+  }
+
+  /* A row with one child left in it. The floor is there because 15px of icon
+     between 6px of padding is a 27px target, and the rows above it are 32. */
+  :root[data-rail="1"] .oq-sidebar .oq-rail-row {
+    justify-content: center;
+    min-height: 36px;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  /* The pending dot is 5px of gap-spaced nothing until a click is waiting on
+     the network — enough to push the icon off the centre of the rail for the
+     whole time it is not showing anything. */
+  :root[data-rail="1"] .oq-sidebar .nav-pending-dot {
+    display: none;
+  }
+
+  /* A menu that inherited the rail's width would be 56px of workspace names. */
+  :root[data-rail="1"] .oq-sidebar .oq-rail-pop {
+    width: 232px;
+  }
+}
